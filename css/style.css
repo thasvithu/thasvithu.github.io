@@ -1314,6 +1314,10 @@ select {
     .portfolio .portfolio-filter button {
         margin-bottom: 10px;
     }
+
+    .home .intro h1 {
+        font-size: 26px;
+    }
 }
 
 @media(max-width: 575px) {
