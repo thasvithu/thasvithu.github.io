@@ -1,9 +1,10 @@
-/*Font Awesome Free Icon*/
+/* Font Awesome Free Icon (v6.4.0) */
 @import url("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css");
 
-/*Google fonts*/
+/* Google Fonts */
 @import url('https://fonts.googleapis.com/css?family=Montserrat:400,500,600,700&display=swap');
 @import url('https://fonts.googleapis.com/css?family=Rubik:500,700,900&display=swap');
+
 
 /* General Style */
 body {
