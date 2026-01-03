@@ -1,9 +1,9 @@
 
 // Preloader
 
-window.addEventListener('load', function(){
+window.addEventListener('load', function () {
     document.querySelector('.preloader').classList.add('opacity-0');
-    setTimeout(function(){
+    setTimeout(function () {
         document.querySelector('.preloader').style.display = 'none';
     }, 1000);
 });
@@ -11,11 +11,11 @@ window.addEventListener('load', function(){
 // iTyped 
 window.ityped.init(document.querySelector('.iTyped'), {
     strings: [
-      "I'm a Data Scientist",
-      "I Love Python",
-      "I Work with AI",
-      "I Build Machine Learning Models",
-      "I Analyze Data"
+        "I'm a Data Scientist",
+        "I Love Python",
+        "I Work with AI",
+        "I Build Machine Learning Models",
+        "I Analyze Data"
     ],
     loop: true
 });
@@ -27,31 +27,33 @@ const filterContainer = document.querySelector('.portfolio-filter'),
     totalFilterBtn = filterBtns.length,
     portfolioItems = document.querySelectorAll('.portfolio-item'),
     totalPortfolioItem = portfolioItems.length;
-    
-    for (let i = 0; i < totalFilterBtn; i++) {
-        filterBtns[i].addEventListener("click", function(){
-            filterContainer.querySelector('.active').classList.remove('active');
-            this.classList.add("active");
 
-            const filterValue = this.getAttribute('data-filter');
-            for (let k = 0; k < totalPortfolioItem; k++) {
-                if (filterValue === portfolioItems[k].getAttribute('data-category')) {
-                    portfolioItems[k].classList.remove('hide');
-                    portfolioItems[k].classList.add('show');
-                } else{
-                    portfolioItems[k].classList.remove('show');
-                    portfolioItems[k].classList.add('hide');
-                }
-                if (filterValue === 'all') {
-                    portfolioItems[k].classList.remove('hide');
-                    portfolioItems[k].classList.add('show');
-                }
+for (let i = 0; i < totalFilterBtn; i++) {
+    filterBtns[i].addEventListener("click", function () {
+        filterContainer.querySelector('.active').classList.remove('active');
+        this.classList.add("active");
+
+        const filterValue = this.getAttribute('data-filter');
+        for (let k = 0; k < totalPortfolioItem; k++) {
+            if (filterValue === portfolioItems[k].getAttribute('data-category')) {
+                portfolioItems[k].classList.remove('hide');
+                portfolioItems[k].classList.add('show');
+            } else {
+                portfolioItems[k].classList.remove('show');
+                portfolioItems[k].classList.add('hide');
             }
-        });
-    }
+            if (filterValue === 'all') {
+                portfolioItems[k].classList.remove('hide');
+                portfolioItems[k].classList.add('show');
+            }
+        }
+    });
+}
 
-// Portfolio Lighbox
+// Portfolio Lightbox - DISABLED (replaced with project detail pages)
+// Portfolio items now link to individual project pages instead of lightbox
 
+/* ORIGINAL LIGHTBOX CODE - DISABLED
 const lightbox = document.querySelector('.lightbox'),
     lightboxImg = lightbox.querySelector('.lightbox-img'),
     lightboxText = lightbox.querySelector('.caption-text'),
@@ -104,6 +106,16 @@ lightbox.addEventListener('click', function(event){
         toggleLightbox();
     }
 });
+*/
+
+// NEW: Navigate to project detail pages
+for (let i = 0; i < totalPortfolioItem; i++) {
+    portfolioItems[i].addEventListener('click', function () {
+        // For now, navigate to the sample project page
+        // You can customize this to navigate to different pages based on the project
+        window.location.href = 'project-rag-chatbot.html';
+    });
+}
 
 // Aside Navbar
 
@@ -115,7 +127,7 @@ const nav = document.querySelector('.nav'),
 
 for (let i = 0; i < totalNavList; i++) {
     const a = navList[i].querySelector('a');
-    a.addEventListener('click', function(){
+    a.addEventListener('click', function () {
         // remove back section class
         removeBackSectionClass();
 
@@ -138,20 +150,17 @@ for (let i = 0; i < totalNavList; i++) {
     });
 }
 
-function addBackSectionClass(num) 
-{
+function addBackSectionClass(num) {
     allSection[num].classList.add('back-section');
 }
 
-function removeBackSectionClass() 
-{
+function removeBackSectionClass() {
     for (let i = 0; i < totalSection; i++) {
         allSection[i].classList.remove('back-section');
     }
 }
 
-function updateNav(element) 
-{
+function updateNav(element) {
     for (let i = 0; i < totalNavList; i++) {
         navList[i].querySelector('a').classList.remove('active');
         const target = element.getAttribute('href').split('#')[1];
@@ -161,7 +170,7 @@ function updateNav(element)
     }
 }
 
-document.querySelector('.hire-me').addEventListener('click', function(){
+document.querySelector('.hire-me').addEventListener('click', function () {
     const sectionIndex = this.getAttribute('data-section-index');
     addBackSectionClass(sectionIndex);
     showSection(this);
@@ -169,15 +178,14 @@ document.querySelector('.hire-me').addEventListener('click', function(){
     removeBackSectionClass();
 });
 
-function showSection(element) 
-{
+function showSection(element) {
     for (let i = 0; i < totalSection; i++) {
         allSection[i].classList.remove('active');
     }
 
     const target = element.getAttribute('href').split('#')[1];
 
-    document.querySelector('#'+target).classList.add('active');
+    document.querySelector('#' + target).classList.add('active');
 }
 
 const navTogglerBtn = document.querySelector('.nav-toggler'),
@@ -185,8 +193,7 @@ const navTogglerBtn = document.querySelector('.nav-toggler'),
 
 navTogglerBtn.addEventListener('click', asideSectionTogglerBtn);
 
-function asideSectionTogglerBtn() 
-{
+function asideSectionTogglerBtn() {
     aside.classList.toggle('open');
     navTogglerBtn.classList.toggle('open');
     for (let i = 0; i < totalSection; i++) {

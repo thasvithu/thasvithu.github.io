@@ -1099,17 +1099,26 @@ select {
 }
 
 .blog .blog-item-inner {
+    background-color: #fdf9ff;
+    border: 1px solid #d4d4e3;
     border-radius: 10px;
     overflow: hidden;
-    border: 1px solid #d4d4e3;
 }
 
-.blog .blog-item-inner .blog-img {
-    position: relative;
+/* Hover effect for new horizontal blog layout */
+.blog .blog-item-inner:hover {
+    transform: translateY(-5px);
+    -webkit-transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(48, 46, 77, 0.2) !important;
+    -webkit-box-shadow: 0 10px 30px rgba(48, 46, 77, 0.2) !important;
+}
+
+.blog .blog-item .blog-img {
     overflow: hidden;
+    position: relative;
 }
 
-.blog .blog-item-inner .blog-img img {
+.blog .blog-item .blog-img img {
     width: 100%;
     display: block;
     transition: all 0.5s ease;
@@ -1121,23 +1130,23 @@ select {
     -webkit-transform: scale(1.1);
 }
 
-.blog .blog-item-inner .blog-img .blog-date {
+.blog .blog-item .blog-img .blog-date {
     position: absolute;
     padding: 4px 10px;
+    background-color: #ffffff;
+    color: #504e70;
     border-radius: 5px;
-    color: #ffffff;
     font-size: 14px;
     font-weight: 600;
     left: 15px;
     bottom: 15px;
 }
 
-.blog .blog-item-inner .blog-info {
+.blog .blog-item .blog-info {
     padding: 30px 15px;
-    background-color: #fdf9ff;
 }
 
-.blog .blog-item-inner .blog-info .blog-title {
+.blog .blog-item .blog-info .blog-title {
     font-size: 18px;
     font-weight: 700;
     color: #302e4d;
@@ -1145,7 +1154,7 @@ select {
     margin-bottom: 10px;
 }
 
-.blog .blog-item-inner .blog-info .blog-description {
+.blog .blog-item .blog-info .blog-description {
     font-size: 16px;
     line-height: 25px;
     color: #504e70;
@@ -1153,16 +1162,15 @@ select {
     margin-bottom: 15px;
 }
 
-.blog .blog-item-inner .blog-info .blog-tags {
-    font-size: 16px;
+.blog .blog-item .blog-info .blog-tags {
+    font-size: 14px;
     line-height: 25px;
     color: #504e70;
     font-weight: 400;
     text-transform: capitalize;
-    font-size: 14px;
 }
 
-.blog .blog-item-inner .blog-info .blog-tags a {
+.blog .blog-item .blog-info .blog-tags a {
     text-decoration: none;
     font-weight: 600;
 }
@@ -1311,6 +1319,13 @@ select {
         flex: 0 0 100%;
         -ms-flex: 0 0 100%;
         max-width: 100%;
+    }
+
+    /* Technical Skills columns to single column on mobile */
+    .about .about-text .skills {
+        flex: 0 0 100% !important;
+        -ms-flex: 0 0 100% !important;
+        max-width: 100% !important;
     }
 
     .portfolio .portfolio-filter button {
