@@ -1,6 +1,6 @@
 ---
 title: Portfolio Backend API
-emoji: robot
+emoji: 🤖
 colorFrom: red
 colorTo: blue
 sdk: docker
