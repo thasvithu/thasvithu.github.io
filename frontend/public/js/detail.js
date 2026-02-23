@@ -61,6 +61,11 @@ async function renderProject(slug) {
     const response = await fetch(`${DETAIL_API_BASE}/projects/${encodeURIComponent(slug)}`);
     if (!response.ok) throw new Error('Project not found');
     const project = await response.json();
+    updatePageSeo({
+      title: `${project.title} | Project | Vimalathas Vithusan`,
+      description: project.subtitle || project.overview || 'Project details by Vimalathas Vithusan.',
+      image: project.image_url || 'https://thasvithu.github.io/images/about.jpg'
+    });
 
     target.innerHTML = `
       <h1>${escapeHtml(project.title)}</h1>
@@ -90,6 +95,11 @@ async function renderBlog(slug) {
     const response = await fetch(`${DETAIL_API_BASE}/blogs/${encodeURIComponent(slug)}`);
     if (!response.ok) throw new Error('Blog not found');
     const post = await response.json();
+    updatePageSeo({
+      title: `${post.title} | Blog | Vimalathas Vithusan`,
+      description: post.summary || 'Blog post by Vimalathas Vithusan.',
+      image: post.image_url || 'https://thasvithu.github.io/images/about.jpg'
+    });
 
     target.innerHTML = `
       <h1>${escapeHtml(post.title)}</h1>
@@ -116,4 +126,21 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
+}
+
+function updatePageSeo({ title, description, image }) {
+  if (title) document.title = String(title);
+
+  setMetaContent('name', 'description', description);
+  setMetaContent('property', 'og:title', title);
+  setMetaContent('property', 'og:description', description);
+  setMetaContent('property', 'og:image', image);
+  setMetaContent('name', 'twitter:title', title);
+  setMetaContent('name', 'twitter:description', description);
+  setMetaContent('name', 'twitter:image', image);
+}
+
+function setMetaContent(attr, key, value) {
+  const node = document.querySelector(`meta[${attr}="${key}"]`);
+  if (node && value) node.setAttribute('content', String(value));
 }
