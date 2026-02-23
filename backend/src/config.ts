@@ -11,6 +11,8 @@ export type Config = {
   smtpSecure: boolean;
   smtpUser: string;
   smtpPass: string;
+  resendApiKey: string;
+  resendFrom: string;
   mailTo: string;
   mailFrom: string;
   adminUsername: string;
@@ -36,6 +38,8 @@ export const config: Config = {
   smtpSecure: String(process.env.SMTP_SECURE || 'false') === 'true',
   smtpUser: process.env.SMTP_USER || '',
   smtpPass: process.env.SMTP_PASS || '',
+  resendApiKey: process.env.RESEND_API_KEY || '',
+  resendFrom: process.env.RESEND_FROM || '',
   mailTo: process.env.MAIL_TO || '',
   mailFrom: process.env.MAIL_FROM || 'Portfolio Contact <no-reply@example.com>',
   adminUsername: process.env.ADMIN_USERNAME || 'admin',

@@ -39,9 +39,25 @@ function getTransporter(): Transporter | null {
 }
 
 export async function sendContactMail({ name, email, subject, message }: ContactMailPayload): Promise<SendResult> {
+  if (!config.mailTo) {
+    return { sent: false, reason: 'mail-to-not-configured' };
+  }
+
+  const text = `Name: ${name}\nEmail: ${email}\n\n${message}`;
+  const html = `<p><strong>Name:</strong> ${escapeHtml(name)}</p><p><strong>Email:</strong> ${escapeHtml(
+    email
+  )}</p><p><strong>Subject:</strong> ${escapeHtml(subject)}</p><p><strong>Message:</strong><br>${escapeHtml(
+    message
+  ).replace(/\n/g, '<br>')}</p>`;
+
+  if (config.resendApiKey) {
+    const sentWithResend = await sendWithResend({ name, email, subject, text, html });
+    if (sentWithResend.sent) return sentWithResend;
+  }
+
   const tx = getTransporter();
-  if (!tx || !config.mailTo) {
-    return { sent: false, reason: 'SMTP not configured' };
+  if (!tx) {
+    return { sent: false, reason: config.resendApiKey ? 'resend-failed-and-smtp-not-configured' : 'smtp-not-configured' };
   }
 
   try {
@@ -50,16 +66,54 @@ export async function sendContactMail({ name, email, subject, message }: Contact
       to: config.mailTo,
       replyTo: email,
       subject: `Portfolio Contact: ${subject}`,
-      text: `Name: ${name}\nEmail: ${email}\n\n${message}`,
-      html: `<p><strong>Name:</strong> ${escapeHtml(name)}</p><p><strong>Email:</strong> ${escapeHtml(
-        email
-      )}</p><p><strong>Subject:</strong> ${escapeHtml(subject)}</p><p><strong>Message:</strong><br>${escapeHtml(
-        message
-      ).replace(/\n/g, '<br>')}</p>`
+      text,
+      html
     });
     return { sent: true };
   } catch (_error) {
     return { sent: false, reason: 'smtp-timeout-or-failure' };
+  }
+}
+
+async function sendWithResend({
+  name,
+  email,
+  subject,
+  text,
+  html
+}: {
+  name: string;
+  email: string;
+  subject: string;
+  text: string;
+  html: string;
+}): Promise<SendResult> {
+  const from = config.resendFrom || config.mailFrom;
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${config.resendApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from,
+        to: [config.mailTo],
+        reply_to: email,
+        subject: `Portfolio Contact: ${subject}`,
+        text,
+        html
+      }),
+      signal: AbortSignal.timeout(10_000)
+    });
+
+    if (!response.ok) {
+      return { sent: false, reason: `resend-http-${response.status}` };
+    }
+
+    return { sent: true };
+  } catch (_error) {
+    return { sent: false, reason: 'resend-timeout-or-failure' };
   }
 }
 
