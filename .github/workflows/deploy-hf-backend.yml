@@ -1,0 +1,40 @@
+name: Deploy Backend To Hugging Face
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-hf-backend.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        run: |
+          test -n "${{ secrets.HF_TOKEN }}"
+          test -n "${{ secrets.HF_SPACE_ID }}"
+
+      - name: Build Hugging Face payload
+        run: |
+          rm -rf hf-space
+          mkdir -p hf-space
+          rsync -av --delete backend/ hf-space/
+          cp backend/hf-space-README.md hf-space/README.md
+
+      - name: Push to Hugging Face Space
+        run: |
+          cd hf-space
+          git init
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Deploy from GitHub: ${GITHUB_SHA}" || echo "No changes to commit"
+          git branch -M main
+          git remote add origin "https://oauth2:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/${{ secrets.HF_SPACE_ID }}.git"
+          git push --force origin main

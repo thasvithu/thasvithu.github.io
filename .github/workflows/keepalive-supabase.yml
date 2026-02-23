@@ -1,0 +1,24 @@
+name: Keepalive Supabase DB
+
+on:
+  schedule:
+    - cron: '30 3 * * 1'
+    - cron: '30 3 * * 4'
+  workflow_dispatch:
+
+jobs:
+  ping-db:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      PGCONNECT_TIMEOUT: '15'
+    steps:
+      - name: Validate required secret
+        run: test -n "$SUPABASE_DB_URL"
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Run keepalive query
+        run: |
+          psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -c "select now() as keepalive_time;"
