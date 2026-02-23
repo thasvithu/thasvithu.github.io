@@ -1,0 +1,20 @@
+name: Keepalive Hugging Face API
+
+on:
+  schedule:
+    - cron: '15 3 * * 1'
+    - cron: '15 3 * * 4'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate required secret
+        run: test -n "${{ secrets.HF_API_HEALTH_URL }}"
+
+      - name: Ping backend health endpoint
+        run: |
+          curl --fail --silent --show-error --location \
+            --retry 3 --retry-delay 5 --max-time 30 \
+            "${{ secrets.HF_API_HEALTH_URL }}"

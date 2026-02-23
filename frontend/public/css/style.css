@@ -7,6 +7,10 @@
 
 
 /* General Style */
+:root {
+    --skin-color: #ec1839;
+}
+
 body {
     margin: 0;
     line-height: 1.5;
@@ -213,6 +217,37 @@ select {
 .btn:hover {
     -webkit-transform: scale(1.05);
     transform: scale(1.05);
+}
+
+.btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn.is-loading {
+    position: relative;
+    padding-left: 52px;
+}
+
+.btn.is-loading::before {
+    content: '';
+    position: absolute;
+    left: 24px;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    margin-top: -8px;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: btnSpin 0.7s linear infinite;
+}
+
+@keyframes btnSpin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .hidden {
@@ -1255,6 +1290,19 @@ select {
 .contact .contact-form .btn {
     height: 50px;
     padding: 0 50px;
+}
+
+#contact-form-status {
+    margin-top: 8px;
+    font-weight: 500;
+}
+
+#contact-form-status.success {
+    color: #2e7d32;
+}
+
+#contact-form-status.error {
+    color: #c62828;
 }
 
 /* Responsive */
