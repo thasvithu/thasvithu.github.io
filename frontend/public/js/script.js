@@ -318,10 +318,29 @@ function initAsideNavigation() {
     navTogglerBtn.addEventListener('click', asideSectionTogglerBtn);
   }
 
+  // Keep section state in sync with URL hash on initial load and refresh.
+  applyHashRoute();
+  window.addEventListener('hashchange', applyHashRoute);
+
   function asideSectionTogglerBtn() {
     aside.classList.toggle('open');
     navTogglerBtn.classList.toggle('open');
     sections.forEach((section) => section.classList.toggle('open'));
+  }
+
+  function applyHashRoute() {
+    const hash = (window.location.hash || '#home').replace('#', '');
+    const targetNode = document.querySelector(`#${hash}`);
+    if (!targetNode) return;
+
+    sections.forEach((section) => section.classList.remove('active'));
+    targetNode.classList.add('active');
+
+    navList.forEach((node) => {
+      const link = node.querySelector('a');
+      const target = (link.getAttribute('href') || '').replace('#', '');
+      link.classList.toggle('active', target === hash);
+    });
   }
 }
 
