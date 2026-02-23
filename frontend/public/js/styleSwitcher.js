@@ -1,33 +1,47 @@
 
-const links = document.querySelectorAll('.alternate-style'),
-    totalLinks = links.length;
+const links = document.querySelectorAll('.alternate-style');
+const bodySkin = document.querySelectorAll('.body-skin');
+const colorStorageKey = 'portfolio_skin_color';
+const themeStorageKey = 'portfolio_theme_mode';
 
-function setActiveStyle(color)
-{
-    for (let i = 0; i < totalLinks; i++) {
-        if (color === links[i].getAttribute('title')) {
-            links[i].removeAttribute('disabled');
-        } else {
-            links[i].setAttribute('disabled', true);
-        }
+function setActiveStyle(color) {
+  for (let i = 0; i < links.length; i += 1) {
+    const title = links[i].getAttribute('title');
+    if (color === title) {
+      links[i].removeAttribute('disabled');
+    } else {
+      links[i].setAttribute('disabled', true);
     }
+  }
+  localStorage.setItem(colorStorageKey, color);
 }
 
-// body skin
-
-const bodySkin = document.querySelectorAll('.body-skin'),
-    totalBodySkin = bodySkin.length;
-
-for (let i = 0; i < totalBodySkin; i++) {
-    bodySkin[i].addEventListener('change', function(){
-        if(this.value === 'dark'){
-            document.body.className = 'dark';
-        } else {
-            document.body.className = '';
-        }
-    });
+for (let i = 0; i < bodySkin.length; i += 1) {
+  bodySkin[i].addEventListener('change', function () {
+    const dark = this.value === 'dark';
+    document.body.classList.toggle('dark', dark);
+    localStorage.setItem(themeStorageKey, dark ? 'dark' : 'light');
+  });
 }
 
-document.querySelector('.toggle-style-switcher').addEventListener('click', () => {
-    document.querySelector('.style-switcher').classList.toggle('open');
-});
+const styleToggle = document.querySelector('.toggle-style-switcher');
+const switcherPanel = document.querySelector('.style-switcher');
+if (styleToggle && switcherPanel) {
+  styleToggle.addEventListener('click', () => {
+    switcherPanel.classList.toggle('open');
+  });
+}
+
+// Restore previously selected color and mode on load.
+const storedColor = localStorage.getItem(colorStorageKey);
+if (storedColor) {
+  setActiveStyle(storedColor);
+}
+
+const storedMode = localStorage.getItem(themeStorageKey) || 'light';
+const darkEnabled = storedMode === 'dark';
+document.body.classList.toggle('dark', darkEnabled);
+for (let i = 0; i < bodySkin.length; i += 1) {
+  const input = bodySkin[i];
+  input.checked = input.value === (darkEnabled ? 'dark' : 'light');
+}
