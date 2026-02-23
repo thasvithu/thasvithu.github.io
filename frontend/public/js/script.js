@@ -184,8 +184,8 @@ function initContactForm() {
         body: JSON.stringify(payload)
       });
 
+      const result = await response.json();
       if (!response.ok) {
-        const result = await response.json();
         throw new Error(result.error || 'Failed to send message');
       }
 
@@ -194,8 +194,13 @@ function initContactForm() {
         window.turnstile.reset();
         if (captchaInput) captchaInput.value = '';
       }
-      status.className = 'success';
-      status.textContent = 'Message sent successfully.';
+      if (result.emailSent === true) {
+        status.className = 'success';
+        status.textContent = 'Message sent successfully.';
+      } else {
+        status.className = 'error';
+        status.textContent = `Saved, but email was not delivered (${result.emailInfo || 'mail not configured'}).`;
+      }
     } catch (error) {
       status.className = 'error';
       status.textContent = error.message || 'Something went wrong. Please try again.';
