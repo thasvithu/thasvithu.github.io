@@ -2,7 +2,7 @@ name: Deploy Backend To Hugging Face
 
 on:
   push:
-    branches: [main]
+    branches: [main, prod]
     paths:
       - 'backend/**'
       - '.github/workflows/deploy-hf-backend.yml'
