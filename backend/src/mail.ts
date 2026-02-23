@@ -26,6 +26,9 @@ function getTransporter(): Transporter | null {
     host: config.smtpHost,
     port: config.smtpPort,
     secure: config.smtpSecure,
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000,
     auth: {
       user: config.smtpUser,
       pass: config.smtpPass
@@ -41,20 +44,23 @@ export async function sendContactMail({ name, email, subject, message }: Contact
     return { sent: false, reason: 'SMTP not configured' };
   }
 
-  await tx.sendMail({
-    from: config.mailFrom,
-    to: config.mailTo,
-    replyTo: email,
-    subject: `Portfolio Contact: ${subject}`,
-    text: `Name: ${name}\nEmail: ${email}\n\n${message}`,
-    html: `<p><strong>Name:</strong> ${escapeHtml(name)}</p><p><strong>Email:</strong> ${escapeHtml(
-      email
-    )}</p><p><strong>Subject:</strong> ${escapeHtml(subject)}</p><p><strong>Message:</strong><br>${escapeHtml(
-      message
-    ).replace(/\n/g, '<br>')}</p>`
-  });
-
-  return { sent: true };
+  try {
+    await tx.sendMail({
+      from: config.mailFrom,
+      to: config.mailTo,
+      replyTo: email,
+      subject: `Portfolio Contact: ${subject}`,
+      text: `Name: ${name}\nEmail: ${email}\n\n${message}`,
+      html: `<p><strong>Name:</strong> ${escapeHtml(name)}</p><p><strong>Email:</strong> ${escapeHtml(
+        email
+      )}</p><p><strong>Subject:</strong> ${escapeHtml(subject)}</p><p><strong>Message:</strong><br>${escapeHtml(
+        message
+      ).replace(/\n/g, '<br>')}</p>`
+    });
+    return { sent: true };
+  } catch (_error) {
+    return { sent: false, reason: 'smtp-timeout-or-failure' };
+  }
 }
 
 function escapeHtml(value: string): string {
