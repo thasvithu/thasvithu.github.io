@@ -184,8 +184,8 @@ function initContactForm() {
         body: JSON.stringify(payload)
       });
 
+      const result = await response.json();
       if (!response.ok) {
-        const result = await response.json();
         throw new Error(result.error || 'Failed to send message');
       }
 
@@ -194,8 +194,13 @@ function initContactForm() {
         window.turnstile.reset();
         if (captchaInput) captchaInput.value = '';
       }
-      status.className = 'success';
-      status.textContent = 'Message sent successfully.';
+      if (result.emailSent === true) {
+        status.className = 'success';
+        status.textContent = 'Message sent successfully.';
+      } else {
+        status.className = 'error';
+        status.textContent = `Saved, but email was not delivered (${result.emailInfo || 'mail not configured'}).`;
+      }
     } catch (error) {
       status.className = 'error';
       status.textContent = error.message || 'Something went wrong. Please try again.';
@@ -318,10 +323,29 @@ function initAsideNavigation() {
     navTogglerBtn.addEventListener('click', asideSectionTogglerBtn);
   }
 
+  // Keep section state in sync with URL hash on initial load and refresh.
+  applyHashRoute();
+  window.addEventListener('hashchange', applyHashRoute);
+
   function asideSectionTogglerBtn() {
     aside.classList.toggle('open');
     navTogglerBtn.classList.toggle('open');
     sections.forEach((section) => section.classList.toggle('open'));
+  }
+
+  function applyHashRoute() {
+    const hash = (window.location.hash || '#home').replace('#', '');
+    const targetNode = document.querySelector(`#${hash}`);
+    if (!targetNode) return;
+
+    sections.forEach((section) => section.classList.remove('active'));
+    targetNode.classList.add('active');
+
+    navList.forEach((node) => {
+      const link = node.querySelector('a');
+      const target = (link.getAttribute('href') || '').replace('#', '');
+      link.classList.toggle('active', target === hash);
+    });
   }
 }
 

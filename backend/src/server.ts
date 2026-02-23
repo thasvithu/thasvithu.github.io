@@ -61,6 +61,9 @@ const app = express();
 const auth = createAuthHelpers(config);
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 5 * 1024 * 1024 } });
 
+// Hugging Face Spaces runs behind a proxy; needed for correct client IP and rate limits.
+app.set('trust proxy', 1);
+
 app.use(helmet());
 app.use(requestLogger);
 app.use(

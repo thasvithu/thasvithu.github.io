@@ -90,7 +90,8 @@ Public endpoints (`/api/projects`, `/api/blogs`) only return published + schedul
 ## Contact form behavior
 - Frontend posts to `POST /api/contact`
 - Backend stores message in `contact_messages`
-- Backend sends email if SMTP env vars are configured
+- Backend sends email via Resend API when `RESEND_API_KEY` is configured (recommended for cloud)
+- If Resend is not configured, backend falls back to SMTP settings
 - Optional Turnstile captcha check via `TURNSTILE_SECRET_KEY` and `TURNSTILE_REQUIRED=true`
 
 ## Security and quality features

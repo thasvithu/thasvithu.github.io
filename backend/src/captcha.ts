@@ -17,11 +17,17 @@ export async function verifyCaptchaToken(token?: string, remoteIp?: string): Pro
   params.set('response', token || '');
   if (remoteIp) params.set('remoteip', remoteIp);
 
-  const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params
-  });
+  let response: Response;
+  try {
+    response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params,
+      signal: AbortSignal.timeout(10_000)
+    });
+  } catch (_error) {
+    return { ok: false, reason: 'captcha-timeout' };
+  }
 
   if (!response.ok) {
     return { ok: false, reason: 'captcha-service-unavailable' };
