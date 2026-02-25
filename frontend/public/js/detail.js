@@ -2,17 +2,33 @@ const DETAIL_API_BASE = window.PORTFOLIO_API_BASE || 'http://localhost:4000/api'
 
 (async function initDetailPage() {
   const params = new URLSearchParams(window.location.search);
-  let slug = params.get('slug');
+  const slug = params.get('slug');
 
   const hasProjectPage = Boolean(document.querySelector('#project-detail'));
   const hasBlogPage = Boolean(document.querySelector('#blog-detail'));
 
   if (!slug) {
-    slug = await resolveMissingSlug(hasProjectPage, hasBlogPage);
-    if (!slug) return;
-    const url = new URL(window.location.href);
-    url.searchParams.set('slug', slug);
-    window.location.replace(url.toString());
+    if (hasProjectPage) {
+      const lastProjectSlug = localStorage.getItem('last_project_slug') || '';
+      if (lastProjectSlug) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('slug', lastProjectSlug);
+        window.location.replace(url.toString());
+        return;
+      }
+      write('#project-detail', 'Missing project slug.');
+    }
+
+    if (hasBlogPage) {
+      const lastBlogSlug = localStorage.getItem('last_blog_slug') || '';
+      if (lastBlogSlug) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('slug', lastBlogSlug);
+        window.location.replace(url.toString());
+        return;
+      }
+      write('#blog-detail', 'Missing blog slug.');
+    }
     return;
   }
 
@@ -24,36 +40,6 @@ const DETAIL_API_BASE = window.PORTFOLIO_API_BASE || 'http://localhost:4000/api'
     await renderBlog(slug);
   }
 })();
-
-async function resolveMissingSlug(hasProjectPage, hasBlogPage) {
-  try {
-    if (hasProjectPage) {
-      const response = await fetch(`${DETAIL_API_BASE}/projects`);
-      if (!response.ok) throw new Error('Unable to load projects');
-      const items = await response.json();
-      if (!items.length) {
-        write('#project-detail', 'No projects available yet.');
-        return '';
-      }
-      return items[0].slug;
-    }
-
-    if (hasBlogPage) {
-      const response = await fetch(`${DETAIL_API_BASE}/blogs`);
-      if (!response.ok) throw new Error('Unable to load blog posts');
-      const items = await response.json();
-      if (!items.length) {
-        write('#blog-detail', 'No blog posts available yet.');
-        return '';
-      }
-      return items[0].slug;
-    }
-  } catch (error) {
-    write('#project-detail', error.message);
-    write('#blog-detail', error.message);
-  }
-  return '';
-}
 
 async function renderProject(slug) {
   const target = document.querySelector('#project-detail');
@@ -67,22 +53,35 @@ async function renderProject(slug) {
       image: project.image_url || 'https://thasvithu.github.io/images/about.jpg'
     });
 
+    const links = [
+      project.github_url ? `<a class="btn detail-action-btn" href="${escapeHtml(project.github_url)}" target="_blank" rel="noopener noreferrer">GitHub</a>` : '',
+      project.demo_url ? `<a class="btn detail-action-btn" href="${escapeHtml(project.demo_url)}" target="_blank" rel="noopener noreferrer">Live Demo</a>` : '',
+      project.docs_url ? `<a class="btn detail-action-btn" href="${escapeHtml(project.docs_url)}" target="_blank" rel="noopener noreferrer">Documentation</a>` : ''
+    ]
+      .filter(Boolean)
+      .join('');
+
     target.innerHTML = `
+      <article class="detail-content">
       <h1>${escapeHtml(project.title)}</h1>
-      <p>${escapeHtml(project.subtitle || '')}</p>
-      <img src="${escapeHtml(project.image_url || 'images/projects/rag.png')}" alt="${escapeHtml(project.title)}" style="max-width:100%; border-radius:10px; margin: 20px 0;">
-      <h3>Overview</h3>
-      <p>${escapeHtml(project.overview || '')}</p>
-      <h3>Features</h3>
-      <p>${escapeHtml(project.features || '')}</p>
-      <h3>Implementation</h3>
-      <p>${escapeHtml(project.implementation || '')}</p>
-      <h3>Challenges</h3>
-      <p>${escapeHtml(project.challenges || '')}</p>
-      <h3>Results</h3>
-      <p>${escapeHtml(project.results || '')}</p>
-      <h3>Future Enhancements</h3>
-      <p>${escapeHtml(project.future_enhancements || '')}</p>
+      ${project.subtitle ? `<p class="detail-subtitle">${escapeHtml(project.subtitle)}</p>` : ''}
+      <p class="detail-meta-line">
+        ${project.category ? `<strong>Category:</strong> ${escapeHtml(project.category)} | ` : ''}
+        ${project.role ? `<strong>Role:</strong> ${escapeHtml(project.role)} | ` : ''}
+        ${project.duration ? `<strong>Duration:</strong> ${escapeHtml(project.duration)} | ` : ''}
+        ${project.status ? `<strong>Status:</strong> ${escapeHtml(project.status)}` : ''}
+      </p>
+      ${project.tags?.length ? `<p class="detail-inline-line"><strong>Tags:</strong> ${escapeHtml(project.tags.join(', '))}</p>` : ''}
+      ${project.technologies ? `<p class="detail-inline-line"><strong>Technologies:</strong> ${escapeHtml(project.technologies)}</p>` : ''}
+      <img class="detail-hero-image" src="${escapeHtml(project.image_url || 'images/projects/rag.png')}" alt="${escapeHtml(project.title)}">
+      ${links ? `<div class="detail-actions">${links}</div>` : ''}
+      ${renderSection('Overview', project.overview)}
+      ${renderSection('Features', project.features)}
+      ${renderSection('Implementation', project.implementation)}
+      ${renderSection('Challenges', project.challenges)}
+      ${renderSection('Results', project.results)}
+      ${renderSection('Future Enhancements', project.future_enhancements)}
+      </article>
     `;
   } catch (error) {
     target.textContent = error.message;
@@ -102,12 +101,19 @@ async function renderBlog(slug) {
     });
 
     target.innerHTML = `
+      <article class="detail-content">
       <h1>${escapeHtml(post.title)}</h1>
-      <p>${escapeHtml(post.date_label || '')}</p>
-      <img src="${escapeHtml(post.image_url || 'images/blog/responsive-web-design.png')}" alt="${escapeHtml(post.title)}" style="max-width:100%; border-radius:10px; margin: 20px 0;">
-      <p>${escapeHtml(post.summary || '')}</p>
-      <hr style="margin: 20px 0;">
-      <p style="white-space: pre-wrap;">${escapeHtml(post.content || '')}</p>
+      <p class="detail-meta-line">
+        ${post.date_label ? `<strong>Date:</strong> ${escapeHtml(post.date_label)} | ` : ''}
+        <strong>Author:</strong> ${escapeHtml(post.author_name || 'Vimalathas Vithusan')}
+      </p>
+      ${post.author_bio ? `<p class="detail-inline-line">${escapeHtml(post.author_bio)}</p>` : ''}
+      ${post.tags?.length ? `<p class="detail-inline-line"><strong>Tags:</strong> ${escapeHtml(post.tags.join(', '))}</p>` : ''}
+      <img class="detail-hero-image" src="${escapeHtml(post.image_url || 'images/blog/responsive-web-design.png')}" alt="${escapeHtml(post.title)}">
+      ${post.summary ? `<p class="detail-summary">${escapeHtml(post.summary)}</p>` : ''}
+      <hr class="detail-divider">
+      <div class="detail-text">${renderTextBlocks(post.content || '')}</div>
+      </article>
     `;
   } catch (error) {
     target.textContent = error.message;
@@ -143,4 +149,18 @@ function updatePageSeo({ title, description, image }) {
 function setMetaContent(attr, key, value) {
   const node = document.querySelector(`meta[${attr}="${key}"]`);
   if (node && value) node.setAttribute('content', String(value));
+}
+
+function renderSection(title, value) {
+  if (!value) return '';
+  return `<h3>${escapeHtml(title)}</h3><div class="detail-text">${renderTextBlocks(value)}</div>`;
+}
+
+function renderTextBlocks(value) {
+  const text = escapeHtml(String(value || '').trim());
+  if (!text) return '';
+  return text
+    .split(/\n{2,}/)
+    .map((block) => `<p class="detail-paragraph">${block}</p>`)
+    .join('');
 }

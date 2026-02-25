@@ -1,3 +1,7 @@
+:root {
+    --skin-color: #fa5b0f;
+}
+
 .aside .logo a::before{
     border-top: 4px solid #fa5b0f;
     border-left: 4px solid #fa5b0f;
