@@ -118,7 +118,7 @@ app.get(
               is_published, publish_at, featured, sort_order, created_at, updated_at
        from projects
        where is_published = true and (publish_at is null or publish_at <= now())
-       order by featured desc, sort_order desc, coalesce(publish_at, created_at) desc, created_at desc`
+       order by created_at desc`
     );
     res.json(result.rows);
   })
@@ -149,7 +149,7 @@ app.get(
               is_published, publish_at, featured, sort_order, created_at, updated_at
        from blog_posts
        where is_published = true and (publish_at is null or publish_at <= now())
-       order by featured desc, sort_order desc, coalesce(publish_at, created_at) desc, created_at desc`
+       order by created_at desc`
     );
     res.json(result.rows);
   })

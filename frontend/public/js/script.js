@@ -57,7 +57,7 @@ async function loadProjects() {
     allProjects = await response.json();
     renderProjects('all');
   } catch (error) {
-    container.innerHTML = '<div class="padd-15">Unable to load projects right now.</div>';
+    container.innerHTML = '<div class="padd-15 loading-state">Unable to load projects right now.</div>';
   }
 }
 
@@ -78,10 +78,14 @@ function renderProjects(filterValue) {
   container.innerHTML = filtered
     .map(
       (project) => `
-      <div class="portfolio-item padd-15 show" data-category="${escapeHtml(normalizeCategory(project.category))}">
-        <a href="project.html?slug=${encodeURIComponent(project.slug)}" class="portfolio-item-inner shadow-dark" style="display:block;">
+      <div class="portfolio-item padd-15 show" data-category="${escapeHtml(normalizeCategory(project.category))}" data-slug="${encodeURIComponent(project.slug)}">
+        <a href="javascript:void(0)" data-slug="${encodeURIComponent(project.slug)}" class="portfolio-item-inner shadow-dark" style="display:block;">
           <div class="portfolio-img">
-            <img src="${escapeHtml(project.image_url || 'images/projects/rag.png')}" alt="${escapeHtml(project.title)}">
+            <img
+              src="${escapeHtml(project.image_url || 'images/projects/rag.png')}"
+              alt="${escapeHtml(project.title)}"
+              loading="lazy"
+              onerror="this.onerror=null;this.src='images/projects/rag.png';">
           </div>
           <div class="portfolio-info">
             <h4>${escapeHtml(project.title)}</h4>
@@ -92,6 +96,17 @@ function renderProjects(filterValue) {
     `
     )
     .join('');
+
+  container.querySelectorAll('.portfolio-item-inner').forEach((node) => {
+    node.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const slug = node.getAttribute('data-slug') || '';
+      if (!slug) return;
+      localStorage.setItem('last_project_slug', slug);
+      window.location.href = `project.html?slug=${slug}`;
+    });
+  });
 }
 
 async function loadBlogs() {
@@ -113,17 +128,17 @@ async function loadBlogs() {
       .map(
         (blog) => `
       <div class="blog-item padd-15" style="flex: 0 0 100%; max-width: 100%;">
-        <a href="blog.html?slug=${encodeURIComponent(blog.slug)}" class="blog-item-inner shadow-dark"
+        <a href="javascript:void(0)" data-slug="${encodeURIComponent(blog.slug)}" class="blog-item-inner shadow-dark"
           style="display: flex; align-items: center; text-decoration: none; transition: all 0.3s ease; cursor: pointer; padding: 20px; border-radius: 10px;">
           <div class="blog-content" style="flex: 1; padding-right: 30px;">
             <div class="blog-date"
               style="display: inline-block; padding: 5px 15px; background-color: var(--skin-color); color: #ffffff; border-radius: 5px; font-size: 12px; margin-bottom: 15px;">
               ${escapeHtml(blog.date_label || 'Recent')}
             </div>
-            <h4 class="blog-title" style="font-size: 22px; margin-bottom: 12px; color: #302e4d;">${escapeHtml(blog.title)}</h4>
+            <h4 class="blog-title" style="font-size: 22px; margin-bottom: 12px;">${escapeHtml(blog.title)}</h4>
             <p class="blog-description"
-              style="font-size: 15px; line-height: 24px; color: #504e70; margin-bottom: 12px;">${escapeHtml(blog.summary || '')}</p>
-            <p class="blog-tags" style="font-size: 14px; color: #504e70;">Tags: <span
+              style="font-size: 15px; line-height: 24px; margin-bottom: 12px;">${escapeHtml(blog.summary || '')}</p>
+            <p class="blog-tags" style="font-size: 14px;">Tags: <span
                 style="color: var(--skin-color); font-weight: 600;">${escapeHtml((blog.tags || []).join(', '))}</span></p>
           </div>
           <div class="blog-img"
@@ -136,15 +151,25 @@ async function loadBlogs() {
     `
       )
       .join('');
+
+    container.querySelectorAll('.blog-item-inner').forEach((node) => {
+      node.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const slug = node.getAttribute('data-slug') || '';
+        if (!slug) return;
+        localStorage.setItem('last_blog_slug', slug);
+        window.location.href = `blog.html?slug=${slug}`;
+      });
+    });
   } catch (error) {
-    container.innerHTML = '<div class="padd-15">Unable to load blog posts right now.</div>';
+    container.innerHTML = '<div class="padd-15 loading-state">Unable to load blog posts right now.</div>';
   }
 }
 
 function initContactForm() {
   const form = document.querySelector('#contact-form');
-  const status = document.querySelector('#contact-form-status');
-  if (!form || !status) return;
+  if (!form) return;
   const submitBtn = form.querySelector('button[type="submit"]');
   const defaultBtnText = submitBtn ? submitBtn.textContent : 'Send Message';
   const captchaInput = form.querySelector('#captcha-token');
@@ -164,13 +189,10 @@ function initContactForm() {
     };
 
     if (turnstileSiteKey && !payload.captcha_token) {
-      status.className = 'error';
-      status.textContent = 'Please verify captcha before sending.';
+      showContactToast('Please verify captcha before sending.', 'error');
       return;
     }
 
-    status.className = '';
-    status.textContent = 'Sending...';
     if (submitBtn) {
       submitBtn.disabled = true;
       submitBtn.classList.add('is-loading');
@@ -195,15 +217,12 @@ function initContactForm() {
         if (captchaInput) captchaInput.value = '';
       }
       if (result.emailSent === true) {
-        status.className = 'success';
-        status.textContent = 'Message sent successfully.';
+        showContactToast('Message sent successfully.', 'success');
       } else {
-        status.className = 'error';
-        status.textContent = `Saved, but email was not delivered (${result.emailInfo || 'mail not configured'}).`;
+        showContactToast(`Saved, but email was not delivered (${result.emailInfo || 'mail not configured'}).`, 'error');
       }
     } catch (error) {
-      status.className = 'error';
-      status.textContent = error.message || 'Something went wrong. Please try again.';
+      showContactToast(error.message || 'Something went wrong. Please try again.', 'error');
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
@@ -251,6 +270,28 @@ function initTurnstileWidget(siteKey, captchaInput) {
       }
     }, 250);
   }
+}
+
+function showContactToast(message, type = 'success') {
+  let toast = document.querySelector('#contact-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'contact-toast';
+    toast.className = 'contact-toast';
+    document.body.appendChild(toast);
+  }
+
+  toast.textContent = String(message || '');
+  toast.classList.remove('success', 'error', 'show');
+  toast.classList.add(type === 'error' ? 'error' : 'success');
+  // Restart animation on repeated messages.
+  void toast.offsetWidth;
+  toast.classList.add('show');
+
+  clearTimeout(window.__contactToastTimer);
+  window.__contactToastTimer = setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2800);
 }
 
 function initAsideNavigation() {

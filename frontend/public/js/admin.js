@@ -35,6 +35,8 @@ function wireEvents() {
   document.querySelector('#load-audit-logs-btn').addEventListener('click', loadAuditLogs);
   document.querySelector('#edit-cancel-btn').addEventListener('click', closeEditModal);
   document.querySelector('#edit-save-btn').addEventListener('click', saveEditModal);
+  document.querySelector('#p-image').addEventListener('input', () => syncImagePreview('#p-image', '#p-image-preview'));
+  document.querySelector('#b-image').addEventListener('input', () => syncImagePreview('#b-image', '#b-image-preview'));
 }
 
 async function initSession() {
@@ -76,12 +78,16 @@ function setLoggedIn(isLoggedIn) {
 }
 
 async function createProject() {
+  const canContinue = await ensureUploadedImageBeforeCreate('#p-image-file', '#p-image', '#project-status');
+  if (!canContinue) return;
   const payload = projectFormPayload();
   await postAdmin('/admin/projects', payload, '#project-status');
   await loadProjects();
 }
 
 async function createBlog() {
+  const canContinue = await ensureUploadedImageBeforeCreate('#b-image-file', '#b-image', '#blog-status');
+  if (!canContinue) return;
   const payload = blogFormPayload();
   await postAdmin('/admin/blogs', payload, '#blog-status');
   await loadBlogs();
@@ -110,7 +116,7 @@ async function uploadImage(fileSelector, targetInputSelector, statusSelector) {
   const file = fileInput.files?.[0];
   if (!file) {
     status.textContent = 'Choose an image file first.';
-    return;
+    return false;
   }
 
   status.textContent = 'Uploading image...';
@@ -120,10 +126,30 @@ async function uploadImage(fileSelector, targetInputSelector, statusSelector) {
   try {
     const result = await adminFetch('/admin/upload', { method: 'POST', body: form });
     targetInput.value = result.publicUrl;
-    status.textContent = 'Image uploaded.';
+    syncImagePreview(targetInputSelector, targetInputSelector === '#p-image' ? '#p-image-preview' : '#b-image-preview');
+    status.textContent = 'Image uploaded and URL set.';
+    return true;
   } catch (error) {
     status.textContent = error.message;
+    return false;
   }
+}
+
+async function ensureUploadedImageBeforeCreate(fileSelector, imageUrlSelector, statusSelector) {
+  const fileInput = document.querySelector(fileSelector);
+  const imageUrlInput = document.querySelector(imageUrlSelector);
+  const status = document.querySelector(statusSelector);
+  const hasSelectedFile = Boolean(fileInput?.files?.[0]);
+  const hasImageUrl = Boolean(imageUrlInput?.value?.trim());
+
+  // Auto-upload selected file before create if URL is still empty.
+  if (hasSelectedFile && !hasImageUrl) {
+    status.textContent = 'Uploading selected image before create...';
+    const ok = await uploadImage(fileSelector, imageUrlSelector, statusSelector);
+    return ok;
+  }
+
+  return true;
 }
 
 async function loadAdminLists() {
@@ -147,7 +173,7 @@ async function loadProjects() {
         <div class="admin-list-item">
           <strong>${escapeHtml(item.title)}</strong>
           <div class="muted">${escapeHtml(item.slug)} | ${escapeHtml(item.category || '')}</div>
-          <div class="muted">Published: ${item.is_published ? 'Yes' : 'No'} | Featured: ${item.featured ? 'Yes' : 'No'} | Sort: ${item.sort_order ?? 0}</div>
+          <div class="muted">Published: ${item.is_published ? 'Yes' : 'No'}</div>
           <div class="admin-actions" style="margin-top:8px;">
             <button class="btn" data-action="edit-project" data-id="${item.id}">Edit</button>
             <button class="btn" data-action="delete-project" data-id="${item.id}">Delete</button>
@@ -186,7 +212,7 @@ async function loadBlogs() {
         <div class="admin-list-item">
           <strong>${escapeHtml(item.title)}</strong>
           <div class="muted">${escapeHtml(item.slug)} | ${escapeHtml(item.date_label || '')}</div>
-          <div class="muted">Published: ${item.is_published ? 'Yes' : 'No'} | Featured: ${item.featured ? 'Yes' : 'No'} | Sort: ${item.sort_order ?? 0}</div>
+          <div class="muted">Published: ${item.is_published ? 'Yes' : 'No'}</div>
           <div class="admin-actions" style="margin-top:8px;">
             <button class="btn" data-action="edit-blog" data-id="${item.id}">Edit</button>
             <button class="btn" data-action="delete-blog" data-id="${item.id}">Delete</button>
@@ -323,22 +349,27 @@ function checked(selector) {
   return Boolean(document.querySelector(selector).checked);
 }
 
-function numberValue(selector, fallback = 0) {
-  const n = Number(document.querySelector(selector).value);
-  return Number.isFinite(n) ? n : fallback;
-}
-
 function projectFormPayload() {
   return {
     title: value('#p-title'),
+    subtitle: value('#p-subtitle'),
     category: value('#p-category'),
+    role: value('#p-role'),
+    duration: value('#p-duration'),
+    status: value('#p-status'),
+    technologies: value('#p-technologies'),
     image_url: value('#p-image'),
     tags: value('#p-tags'),
+    github_url: value('#p-github-url'),
+    demo_url: value('#p-demo-url'),
+    docs_url: value('#p-docs-url'),
     overview: value('#p-summary'),
-    is_published: checked('#p-published'),
-    featured: checked('#p-featured'),
-    publish_at: value('#p-publish-at'),
-    sort_order: numberValue('#p-sort-order')
+    features: value('#p-features'),
+    implementation: value('#p-implementation'),
+    challenges: value('#p-challenges'),
+    results: value('#p-results'),
+    future_enhancements: value('#p-future'),
+    is_published: checked('#p-published')
   };
 }
 
@@ -346,14 +377,13 @@ function blogFormPayload() {
   return {
     title: value('#b-title'),
     date_label: value('#b-date'),
+    author_name: value('#b-author-name'),
+    author_bio: value('#b-author-bio'),
     image_url: value('#b-image'),
     tags: value('#b-tags'),
     summary: value('#b-summary'),
     content: value('#b-content'),
-    is_published: checked('#b-published'),
-    featured: checked('#b-featured'),
-    publish_at: value('#b-publish-at'),
-    sort_order: numberValue('#b-sort-order')
+    is_published: checked('#b-published')
   };
 }
 
@@ -363,21 +393,49 @@ function openEditModal(type, row) {
   document.querySelector('#edit-modal-title').textContent = type === 'project' ? 'Edit Project' : 'Edit Blog';
 
   document.querySelector('#edit-title').value = row.title || '';
+  document.querySelector('#edit-subtitle').value = row.subtitle || '';
   document.querySelector('#edit-category').value = row.category || '';
+  document.querySelector('#edit-role').value = row.role || '';
+  document.querySelector('#edit-duration').value = row.duration || '';
+  document.querySelector('#edit-status').value = row.status || '';
+  document.querySelector('#edit-technologies').value = row.technologies || '';
   document.querySelector('#edit-date-label').value = row.date_label || '';
+  document.querySelector('#edit-author-name').value = row.author_name || '';
+  document.querySelector('#edit-author-bio').value = row.author_bio || '';
   document.querySelector('#edit-image-url').value = row.image_url || '';
   document.querySelector('#edit-tags').value = (row.tags || []).join(', ');
+  document.querySelector('#edit-github-url').value = row.github_url || '';
+  document.querySelector('#edit-demo-url').value = row.demo_url || '';
+  document.querySelector('#edit-docs-url').value = row.docs_url || '';
   document.querySelector('#edit-published').checked = Boolean(row.is_published);
-  document.querySelector('#edit-featured').checked = Boolean(row.featured);
-  document.querySelector('#edit-publish-at').value = isoToLocalDatetime(row.publish_at);
-  document.querySelector('#edit-sort-order').value = String(row.sort_order ?? 0);
   document.querySelector('#edit-summary').value = row.summary || row.overview || '';
+  document.querySelector('#edit-features').value = row.features || '';
+  document.querySelector('#edit-implementation').value = row.implementation || '';
+  document.querySelector('#edit-challenges').value = row.challenges || '';
+  document.querySelector('#edit-results').value = row.results || '';
+  document.querySelector('#edit-future').value = row.future_enhancements || '';
   document.querySelector('#edit-content').value = row.content || '';
 
   const isProject = type === 'project';
-  document.querySelector('#edit-category').style.display = isProject ? 'block' : 'none';
-  document.querySelector('#edit-date-label').style.display = isProject ? 'none' : 'block';
-  document.querySelector('#edit-content').style.display = isProject ? 'none' : 'block';
+  toggleField('#edit-subtitle', isProject);
+  toggleField('#edit-category', isProject);
+  toggleField('#edit-role', isProject);
+  toggleField('#edit-duration', isProject);
+  toggleField('#edit-status', isProject);
+  toggleField('#edit-technologies', isProject);
+  toggleField('#edit-github-url', isProject);
+  toggleField('#edit-demo-url', isProject);
+  toggleField('#edit-docs-url', isProject);
+  toggleField('#edit-features', isProject);
+  toggleField('#edit-implementation', isProject);
+  toggleField('#edit-challenges', isProject);
+  toggleField('#edit-results', isProject);
+  toggleField('#edit-future', isProject);
+
+  toggleField('#edit-date-label', !isProject);
+  toggleField('#edit-author-name', !isProject);
+  toggleField('#edit-author-bio', !isProject);
+  toggleField('#edit-content', !isProject);
 
   editModal.classList.add('open');
   editModal.setAttribute('aria-hidden', 'false');
@@ -397,10 +455,7 @@ async function saveEditModal() {
     title: value('#edit-title'),
     image_url: value('#edit-image-url'),
     tags: value('#edit-tags'),
-    is_published: checked('#edit-published'),
-    featured: checked('#edit-featured'),
-    publish_at: value('#edit-publish-at'),
-    sort_order: numberValue('#edit-sort-order')
+    is_published: checked('#edit-published')
   };
 
   try {
@@ -410,8 +465,21 @@ async function saveEditModal() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...payload,
+          subtitle: value('#edit-subtitle'),
           category: value('#edit-category'),
-          overview: value('#edit-summary')
+          role: value('#edit-role'),
+          duration: value('#edit-duration'),
+          status: value('#edit-status'),
+          technologies: value('#edit-technologies'),
+          github_url: value('#edit-github-url'),
+          demo_url: value('#edit-demo-url'),
+          docs_url: value('#edit-docs-url'),
+          overview: value('#edit-summary'),
+          features: value('#edit-features'),
+          implementation: value('#edit-implementation'),
+          challenges: value('#edit-challenges'),
+          results: value('#edit-results'),
+          future_enhancements: value('#edit-future')
         })
       });
       await loadProjects();
@@ -422,6 +490,8 @@ async function saveEditModal() {
         body: JSON.stringify({
           ...payload,
           date_label: value('#edit-date-label'),
+          author_name: value('#edit-author-name'),
+          author_bio: value('#edit-author-bio'),
           summary: value('#edit-summary'),
           content: value('#edit-content')
         })
@@ -436,15 +506,6 @@ async function saveEditModal() {
   }
 }
 
-function isoToLocalDatetime(isoValue) {
-  if (!isoValue) return '';
-  const date = new Date(isoValue);
-  if (Number.isNaN(date.getTime())) return '';
-  const offset = date.getTimezoneOffset();
-  const local = new Date(date.getTime() - offset * 60000);
-  return local.toISOString().slice(0, 16);
-}
-
 function escapeHtml(value) {
   return String(value)
     .replaceAll('&', '&amp;')
@@ -452,4 +513,26 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
+}
+
+function toggleField(selector, visible) {
+  const node = document.querySelector(selector);
+  if (!node) return;
+  node.style.display = visible ? 'block' : 'none';
+}
+
+function syncImagePreview(inputSelector, previewSelector) {
+  const input = document.querySelector(inputSelector);
+  const preview = document.querySelector(previewSelector);
+  if (!input || !preview) return;
+
+  const url = (input.value || '').trim();
+  if (!url) {
+    preview.style.display = 'none';
+    preview.removeAttribute('src');
+    return;
+  }
+
+  preview.src = url;
+  preview.style.display = 'block';
 }

@@ -16,6 +16,7 @@
     .btn { background-color: var(--skin-color); color: #fff; border: none; }
     .btn:disabled { opacity: 0.6; cursor: not-allowed; }
     .admin-card textarea, .admin-card input { width: 100%; margin-bottom: 10px; padding: 12px; border: 1px solid #d4d4e3; border-radius: 8px; }
+    .admin-card select { width: 100%; margin-bottom: 10px; padding: 12px; border: 1px solid #d4d4e3; border-radius: 8px; background: #fff; }
     .admin-card textarea { min-height: 120px; }
     .admin-check { display: flex; align-items: center; gap: 8px; margin: 4px 0 10px; font-size: 14px; color: #302e4d; }
     .admin-check input { width: auto; margin: 0; }
@@ -27,6 +28,7 @@
     .modal-backdrop.open { display: flex; }
     .modal-card { width: 100%; max-width: 680px; max-height: 90vh; overflow: auto; background: #fff; border-radius: 12px; border: 1px solid #ddd; padding: 20px; }
     .modal-title { margin-bottom: 10px; }
+    .image-preview { width: 100%; max-height: 200px; object-fit: contain; border: 1px solid #d4d4e3; border-radius: 8px; background: #fff; margin-bottom: 10px; display: none; }
     @media (max-width: 900px) { .admin-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -60,14 +62,35 @@
         <div class="admin-card">
           <h3>Create Project</h3>
           <input id="p-title" placeholder="Title" required>
-          <input id="p-category" placeholder="Category (e.g. rag)">
-          <input id="p-image" placeholder="Image URL/path">
+          <input id="p-subtitle" placeholder="Subtitle / one-line value proposition">
+          <select id="p-category">
+            <option value="">Select category</option>
+            <option value="data-science">Data Science</option>
+            <option value="machine-learning">Machine Learning</option>
+            <option value="deep-learning">Deep Learning</option>
+            <option value="nlp">NLP</option>
+            <option value="generative-ai">Generative AI</option>
+            <option value="rag">RAG</option>
+            <option value="ai-agents">AI Agents</option>
+            <option value="ai-ml">AI / ML</option>
+          </select>
+          <input id="p-role" placeholder="Your role (e.g. Full Stack Developer)">
+          <input id="p-duration" placeholder="Duration (e.g. 3 months)">
+          <input id="p-status" placeholder="Status (e.g. Completed)">
+          <input id="p-technologies" placeholder="Technologies (comma separated)">
+          <input id="p-image" placeholder="Auto-filled after upload (or paste image URL)" readonly>
+          <img id="p-image-preview" class="image-preview" alt="Project thumbnail preview">
           <input id="p-tags" placeholder="Tags comma separated">
+          <input id="p-github-url" placeholder="GitHub URL">
+          <input id="p-demo-url" placeholder="Live demo URL">
+          <input id="p-docs-url" placeholder="Docs / case study URL">
           <label class="admin-check"><input id="p-published" type="checkbox" checked> Published</label>
-          <label class="admin-check"><input id="p-featured" type="checkbox"> Featured</label>
-          <input id="p-publish-at" type="datetime-local" placeholder="Publish at">
-          <input id="p-sort-order" type="number" value="0" placeholder="Sort order">
-          <textarea id="p-summary" placeholder="Overview"></textarea>
+          <textarea id="p-summary" placeholder="Overview: problem, context, objective"></textarea>
+          <textarea id="p-features" placeholder="Key features (use line breaks or bullets)"></textarea>
+          <textarea id="p-implementation" placeholder="Implementation details: architecture, data flow, integrations"></textarea>
+          <textarea id="p-challenges" placeholder="Challenges and constraints"></textarea>
+          <textarea id="p-results" placeholder="Results with metrics (latency, accuracy, users, impact)"></textarea>
+          <textarea id="p-future" placeholder="Future enhancements / roadmap"></textarea>
           <input id="p-image-file" type="file" accept="image/*">
           <div class="admin-actions">
             <button class="btn" id="upload-project-image-btn">Upload Image</button>
@@ -80,12 +103,12 @@
           <h3>Create Blog</h3>
           <input id="b-title" placeholder="Title" required>
           <input id="b-date" placeholder="Date label (e.g. Feb 2026)">
-          <input id="b-image" placeholder="Image URL/path">
+          <input id="b-author-name" placeholder="Author name">
+          <input id="b-author-bio" placeholder="Author short bio">
+          <input id="b-image" placeholder="Auto-filled after upload (or paste image URL)" readonly>
+          <img id="b-image-preview" class="image-preview" alt="Blog thumbnail preview">
           <input id="b-tags" placeholder="Tags comma separated">
           <label class="admin-check"><input id="b-published" type="checkbox" checked> Published</label>
-          <label class="admin-check"><input id="b-featured" type="checkbox"> Featured</label>
-          <input id="b-publish-at" type="datetime-local" placeholder="Publish at">
-          <input id="b-sort-order" type="number" value="0" placeholder="Sort order">
           <textarea id="b-summary" placeholder="Summary"></textarea>
           <textarea id="b-content" placeholder="Content (plain text / markdown)"></textarea>
           <input id="b-image-file" type="file" accept="image/*">
@@ -126,15 +149,27 @@
     <div class="modal-card">
       <h3 class="modal-title" id="edit-modal-title">Edit Item</h3>
       <input id="edit-title" placeholder="Title">
+      <input id="edit-subtitle" placeholder="Subtitle (projects only)">
       <input id="edit-category" placeholder="Category (projects only)">
+      <input id="edit-role" placeholder="Role (projects only)">
+      <input id="edit-duration" placeholder="Duration (projects only)">
+      <input id="edit-status" placeholder="Status (projects only)">
+      <input id="edit-technologies" placeholder="Technologies (projects only)">
       <input id="edit-date-label" placeholder="Date label (blogs only)">
+      <input id="edit-author-name" placeholder="Author name (blogs only)">
+      <input id="edit-author-bio" placeholder="Author bio (blogs only)">
       <input id="edit-image-url" placeholder="Image URL/path">
       <input id="edit-tags" placeholder="Tags comma separated">
+      <input id="edit-github-url" placeholder="GitHub URL (projects only)">
+      <input id="edit-demo-url" placeholder="Live demo URL (projects only)">
+      <input id="edit-docs-url" placeholder="Docs URL (projects only)">
       <label class="admin-check"><input id="edit-published" type="checkbox"> Published</label>
-      <label class="admin-check"><input id="edit-featured" type="checkbox"> Featured</label>
-      <input id="edit-publish-at" type="datetime-local" placeholder="Publish at">
-      <input id="edit-sort-order" type="number" value="0" placeholder="Sort order">
       <textarea id="edit-summary" placeholder="Summary / Overview"></textarea>
+      <textarea id="edit-features" placeholder="Features (projects only)"></textarea>
+      <textarea id="edit-implementation" placeholder="Implementation (projects only)"></textarea>
+      <textarea id="edit-challenges" placeholder="Challenges (projects only)"></textarea>
+      <textarea id="edit-results" placeholder="Results (projects only)"></textarea>
+      <textarea id="edit-future" placeholder="Future enhancements (projects only)"></textarea>
       <textarea id="edit-content" placeholder="Content (blogs)"></textarea>
       <div class="admin-actions">
         <button class="btn" id="edit-save-btn">Save</button>
