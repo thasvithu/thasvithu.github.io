@@ -112,7 +112,7 @@ async function renderBlog(slug) {
       <img class="detail-hero-image" src="${escapeHtml(post.image_url || 'images/blog/responsive-web-design.png')}" alt="${escapeHtml(post.title)}">
       ${post.summary ? `<p class="detail-summary">${escapeHtml(post.summary)}</p>` : ''}
       <hr class="detail-divider">
-      <div class="detail-text">${renderTextBlocks(post.content || '')}</div>
+      <div class="detail-text detail-markdown">${renderMarkdown(post.content || '')}</div>
       </article>
     `;
   } catch (error) {
@@ -153,7 +153,7 @@ function setMetaContent(attr, key, value) {
 
 function renderSection(title, value) {
   if (!value) return '';
-  return `<h3>${escapeHtml(title)}</h3><div class="detail-text">${renderTextBlocks(value)}</div>`;
+  return `<h3>${escapeHtml(title)}</h3><div class="detail-text detail-markdown">${renderMarkdown(value)}</div>`;
 }
 
 function renderTextBlocks(value) {
@@ -163,4 +163,110 @@ function renderTextBlocks(value) {
     .split(/\n{2,}/)
     .map((block) => `<p class="detail-paragraph">${block}</p>`)
     .join('');
+}
+
+function renderMarkdown(value) {
+  const lines = String(value || '').replace(/\r\n/g, '\n').split('\n');
+  const html = [];
+  let inList = false;
+  let listType = '';
+  let inCode = false;
+  let codeLines = [];
+
+  const closeList = () => {
+    if (inList) {
+      html.push(`</${listType}>`);
+      inList = false;
+      listType = '';
+    }
+  };
+
+  const closeCode = () => {
+    if (inCode) {
+      html.push(`<pre class="detail-code"><code>${escapeHtml(codeLines.join('\n'))}</code></pre>`);
+      inCode = false;
+      codeLines = [];
+    }
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trimEnd();
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith('```')) {
+      closeList();
+      if (inCode) {
+        closeCode();
+      } else {
+        inCode = true;
+        codeLines = [];
+      }
+      continue;
+    }
+
+    if (inCode) {
+      codeLines.push(rawLine);
+      continue;
+    }
+
+    if (!trimmed) {
+      closeList();
+      continue;
+    }
+
+    if (/^---+$/.test(trimmed) || /^\*\*\*+$/.test(trimmed)) {
+      closeList();
+      html.push('<hr class="detail-divider">');
+      continue;
+    }
+
+    const headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+    if (headingMatch) {
+      closeList();
+      const level = headingMatch[1].length;
+      const text = renderInlineMarkdown(headingMatch[2]);
+      html.push(`<h${level + 1}>${text}</h${level + 1}>`);
+      continue;
+    }
+
+    const ulMatch = trimmed.match(/^[-*+]\s+(.+)$/);
+    if (ulMatch) {
+      if (!inList || listType !== 'ul') {
+        closeList();
+        inList = true;
+        listType = 'ul';
+        html.push('<ul class="detail-list">');
+      }
+      html.push(`<li>${renderInlineMarkdown(ulMatch[1])}</li>`);
+      continue;
+    }
+
+    const olMatch = trimmed.match(/^\d+\.\s+(.+)$/);
+    if (olMatch) {
+      if (!inList || listType !== 'ol') {
+        closeList();
+        inList = true;
+        listType = 'ol';
+        html.push('<ol class="detail-list">');
+      }
+      html.push(`<li>${renderInlineMarkdown(olMatch[1])}</li>`);
+      continue;
+    }
+
+    closeList();
+    html.push(`<p class="detail-paragraph">${renderInlineMarkdown(trimmed)}</p>`);
+  }
+
+  closeCode();
+  closeList();
+  return html.join('');
+}
+
+function renderInlineMarkdown(text) {
+  let output = escapeHtml(String(text || ''));
+  output = output.replace(/`([^`]+)`/g, '<code>$1</code>');
+  output = output.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  output = output.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+  output = output.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  return output;
 }
