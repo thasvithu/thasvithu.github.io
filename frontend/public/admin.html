@@ -23,6 +23,9 @@
     .admin-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .admin-list-item { padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin-top: 10px; }
     .muted { color: #6a6a6a; font-size: 13px; }
+    .pagination { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+    .pagination .page-info { font-size: 13px; color: #6a6a6a; }
+    .pagination .btn { padding: 8px 12px; font-size: 14px; }
     .hidden { display: none; }
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
     .modal-backdrop.open { display: flex; }
@@ -65,14 +68,11 @@
           <input id="p-subtitle" placeholder="Subtitle / one-line value proposition">
           <select id="p-category">
             <option value="">Select category</option>
-            <option value="data-science">Data Science</option>
+            <option value="ai-systems">AI Systems</option>
             <option value="machine-learning">Machine Learning</option>
-            <option value="deep-learning">Deep Learning</option>
-            <option value="nlp">NLP</option>
             <option value="generative-ai">Generative AI</option>
-            <option value="rag">RAG</option>
-            <option value="ai-agents">AI Agents</option>
-            <option value="ai-ml">AI / ML</option>
+            <option value="rag-applications">RAG Applications</option>
+            <option value="backend-deployment">Backend & Deployment</option>
           </select>
           <input id="p-role" placeholder="Your role (e.g. Full Stack Developer)">
           <input id="p-duration" placeholder="Duration (e.g. 3 months)">
@@ -83,7 +83,6 @@
           <input id="p-tags" placeholder="Tags comma separated">
           <input id="p-github-url" placeholder="GitHub URL">
           <input id="p-demo-url" placeholder="Live demo URL">
-          <input id="p-docs-url" placeholder="Docs / case study URL">
           <label class="admin-check"><input id="p-published" type="checkbox" checked> Published</label>
           <textarea id="p-summary" placeholder="Overview: problem, context, objective"></textarea>
           <textarea id="p-features" placeholder="Key features (use line breaks or bullets)"></textarea>
@@ -124,10 +123,12 @@
         <div class="admin-card">
           <h3>Manage Projects</h3>
           <div id="projects-admin-list"></div>
+          <div class="pagination" id="projects-pagination"></div>
         </div>
         <div class="admin-card">
           <h3>Manage Blogs</h3>
           <div id="blogs-admin-list"></div>
+          <div class="pagination" id="blogs-pagination"></div>
         </div>
       </div>
 
@@ -135,12 +136,14 @@
         <h3>Contact Messages</h3>
         <button class="btn" id="load-messages-btn">Load Messages</button>
         <div id="admin-messages"></div>
+        <div class="pagination" id="messages-pagination"></div>
       </div>
 
       <div class="admin-card">
         <h3>Audit Logs</h3>
         <button class="btn" id="load-audit-logs-btn">Load Audit Logs</button>
         <div id="admin-audit-logs"></div>
+        <div class="pagination" id="audit-pagination"></div>
       </div>
     </div>
   </div>
@@ -162,7 +165,6 @@
       <input id="edit-tags" placeholder="Tags comma separated">
       <input id="edit-github-url" placeholder="GitHub URL (projects only)">
       <input id="edit-demo-url" placeholder="Live demo URL (projects only)">
-      <input id="edit-docs-url" placeholder="Docs URL (projects only)">
       <label class="admin-check"><input id="edit-published" type="checkbox"> Published</label>
       <textarea id="edit-summary" placeholder="Summary / Overview"></textarea>
       <textarea id="edit-features" placeholder="Features (projects only)"></textarea>

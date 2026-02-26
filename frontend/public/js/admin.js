@@ -8,6 +8,17 @@ const editModal = document.querySelector('#edit-modal');
 const editStatus = document.querySelector('#edit-status');
 let editContext = null;
 const DEFAULT_API_BASE = window.PORTFOLIO_API_BASE || 'http://localhost:4000/api';
+const PAGE_SIZE = 10;
+const paginationState = {
+  projects: { page: 1, total: 0 },
+  blogs: { page: 1, total: 0 },
+  messages: { page: 1, total: 0 },
+  audits: { page: 1, total: 0 }
+};
+let projectsCache = [];
+let blogsCache = [];
+let messagesCache = [];
+let auditsCache = [];
 
 apiInput.value = localStorage.getItem('admin_api_base') || DEFAULT_API_BASE;
 
@@ -161,13 +172,18 @@ async function loadProjects() {
   box.textContent = 'Loading projects...';
 
   try {
-    const items = await adminFetch('/admin/projects');
-    if (!items.length) {
+    projectsCache = await adminFetch('/admin/projects');
+    if (!projectsCache.length) {
       box.textContent = 'No projects yet.';
+      renderPagination('projects-pagination', paginationState.projects, () => {});
       return;
     }
 
-    box.innerHTML = items
+    paginationState.projects.total = projectsCache.length;
+    paginationState.projects.page = clampPage(paginationState.projects.page, paginationState.projects.total);
+    const pageItems = slicePage(projectsCache, paginationState.projects.page);
+
+    box.innerHTML = pageItems
       .map(
         (item) => `
         <div class="admin-list-item">
@@ -184,11 +200,16 @@ async function loadProjects() {
       .join('');
 
     box.querySelectorAll('[data-action="edit-project"]').forEach((btn) => {
-      btn.addEventListener('click', () => editProject(btn.getAttribute('data-id'), items));
+      btn.addEventListener('click', () => editProject(btn.getAttribute('data-id'), projectsCache));
     });
 
     box.querySelectorAll('[data-action="delete-project"]').forEach((btn) => {
       btn.addEventListener('click', () => deleteProject(btn.getAttribute('data-id')));
+    });
+
+    renderPagination('projects-pagination', paginationState.projects, (page) => {
+      paginationState.projects.page = page;
+      loadProjects();
     });
   } catch (error) {
     box.textContent = error.message;
@@ -200,13 +221,18 @@ async function loadBlogs() {
   box.textContent = 'Loading blogs...';
 
   try {
-    const items = await adminFetch('/admin/blogs');
-    if (!items.length) {
+    blogsCache = await adminFetch('/admin/blogs');
+    if (!blogsCache.length) {
       box.textContent = 'No blogs yet.';
+      renderPagination('blogs-pagination', paginationState.blogs, () => {});
       return;
     }
 
-    box.innerHTML = items
+    paginationState.blogs.total = blogsCache.length;
+    paginationState.blogs.page = clampPage(paginationState.blogs.page, paginationState.blogs.total);
+    const pageItems = slicePage(blogsCache, paginationState.blogs.page);
+
+    box.innerHTML = pageItems
       .map(
         (item) => `
         <div class="admin-list-item">
@@ -223,11 +249,16 @@ async function loadBlogs() {
       .join('');
 
     box.querySelectorAll('[data-action="edit-blog"]').forEach((btn) => {
-      btn.addEventListener('click', () => editBlog(btn.getAttribute('data-id'), items));
+      btn.addEventListener('click', () => editBlog(btn.getAttribute('data-id'), blogsCache));
     });
 
     box.querySelectorAll('[data-action="delete-blog"]').forEach((btn) => {
       btn.addEventListener('click', () => deleteBlog(btn.getAttribute('data-id')));
+    });
+
+    renderPagination('blogs-pagination', paginationState.blogs, (page) => {
+      paginationState.blogs.page = page;
+      loadBlogs();
     });
   } catch (error) {
     box.textContent = error.message;
@@ -271,13 +302,18 @@ async function loadMessages() {
   box.textContent = 'Loading messages...';
 
   try {
-    const data = await adminFetch('/admin/messages');
-    if (!data.length) {
+    messagesCache = await adminFetch('/admin/messages');
+    if (!messagesCache.length) {
       box.textContent = 'No contact messages yet.';
+      renderPagination('messages-pagination', paginationState.messages, () => {});
       return;
     }
 
-    box.innerHTML = data
+    paginationState.messages.total = messagesCache.length;
+    paginationState.messages.page = clampPage(paginationState.messages.page, paginationState.messages.total);
+    const pageItems = slicePage(messagesCache, paginationState.messages.page);
+
+    box.innerHTML = pageItems
       .map(
         (msg) => `
         <div class="admin-list-item">
@@ -289,6 +325,11 @@ async function loadMessages() {
       `
       )
       .join('');
+
+    renderPagination('messages-pagination', paginationState.messages, (page) => {
+      paginationState.messages.page = page;
+      loadMessages();
+    });
   } catch (error) {
     box.textContent = error.message;
   }
@@ -299,13 +340,18 @@ async function loadAuditLogs() {
   box.textContent = 'Loading audit logs...';
 
   try {
-    const logs = await adminFetch('/admin/audit-logs');
-    if (!logs.length) {
+    auditsCache = await adminFetch('/admin/audit-logs');
+    if (!auditsCache.length) {
       box.textContent = 'No audit logs yet.';
+      renderPagination('audit-pagination', paginationState.audits, () => {});
       return;
     }
 
-    box.innerHTML = logs
+    paginationState.audits.total = auditsCache.length;
+    paginationState.audits.page = clampPage(paginationState.audits.page, paginationState.audits.total);
+    const pageItems = slicePage(auditsCache, paginationState.audits.page);
+
+    box.innerHTML = pageItems
       .map(
         (log) => `
         <div class="admin-list-item">
@@ -315,6 +361,11 @@ async function loadAuditLogs() {
       `
       )
       .join('');
+
+    renderPagination('audit-pagination', paginationState.audits, (page) => {
+      paginationState.audits.page = page;
+      loadAuditLogs();
+    });
   } catch (error) {
     box.textContent = error.message;
   }
@@ -362,7 +413,6 @@ function projectFormPayload() {
     tags: value('#p-tags'),
     github_url: value('#p-github-url'),
     demo_url: value('#p-demo-url'),
-    docs_url: value('#p-docs-url'),
     overview: value('#p-summary'),
     features: value('#p-features'),
     implementation: value('#p-implementation'),
@@ -406,7 +456,6 @@ function openEditModal(type, row) {
   document.querySelector('#edit-tags').value = (row.tags || []).join(', ');
   document.querySelector('#edit-github-url').value = row.github_url || '';
   document.querySelector('#edit-demo-url').value = row.demo_url || '';
-  document.querySelector('#edit-docs-url').value = row.docs_url || '';
   document.querySelector('#edit-published').checked = Boolean(row.is_published);
   document.querySelector('#edit-summary').value = row.summary || row.overview || '';
   document.querySelector('#edit-features').value = row.features || '';
@@ -425,7 +474,6 @@ function openEditModal(type, row) {
   toggleField('#edit-technologies', isProject);
   toggleField('#edit-github-url', isProject);
   toggleField('#edit-demo-url', isProject);
-  toggleField('#edit-docs-url', isProject);
   toggleField('#edit-features', isProject);
   toggleField('#edit-implementation', isProject);
   toggleField('#edit-challenges', isProject);
@@ -473,7 +521,6 @@ async function saveEditModal() {
           technologies: value('#edit-technologies'),
           github_url: value('#edit-github-url'),
           demo_url: value('#edit-demo-url'),
-          docs_url: value('#edit-docs-url'),
           overview: value('#edit-summary'),
           features: value('#edit-features'),
           implementation: value('#edit-implementation'),
@@ -513,6 +560,34 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
+}
+
+function renderPagination(containerId, state, onPageChange) {
+  const container = document.querySelector(`#${containerId}`);
+  if (!container) return;
+
+  const totalPages = Math.max(1, Math.ceil(state.total / PAGE_SIZE));
+  const current = Math.min(state.page, totalPages);
+  container.innerHTML = `
+    <button class="btn" data-action="prev" ${current <= 1 ? 'disabled' : ''}>Previous</button>
+    <span class="page-info">Page ${current} of ${totalPages}</span>
+    <button class="btn" data-action="next" ${current >= totalPages ? 'disabled' : ''}>Next</button>
+  `;
+
+  const prev = container.querySelector('[data-action="prev"]');
+  const next = container.querySelector('[data-action="next"]');
+  if (prev) prev.addEventListener('click', () => onPageChange(current - 1));
+  if (next) next.addEventListener('click', () => onPageChange(current + 1));
+}
+
+function slicePage(items, page) {
+  const start = (page - 1) * PAGE_SIZE;
+  return items.slice(start, start + PAGE_SIZE);
+}
+
+function clampPage(page, totalItems) {
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+  return Math.min(Math.max(page, 1), totalPages);
 }
 
 function toggleField(selector, visible) {
