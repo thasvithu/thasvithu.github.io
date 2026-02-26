@@ -170,7 +170,3 @@ Set in:
 - CI in `.github/workflows/ci.yml`
 
 ---
-
-## Need help?
-
-If you want any section expanded or tailored (custom hosting, Vercel/Netlify, etc.), tell me.
