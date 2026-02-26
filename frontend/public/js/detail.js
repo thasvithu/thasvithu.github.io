@@ -83,6 +83,7 @@ async function renderProject(slug) {
       ${renderSection('Future Enhancements', project.future_enhancements)}
       </article>
     `;
+    enhanceMarkdown('#project-detail');
   } catch (error) {
     target.textContent = error.message;
   }
@@ -115,6 +116,7 @@ async function renderBlog(slug) {
       <div class="detail-text detail-markdown">${renderMarkdown(post.content || '')}</div>
       </article>
     `;
+    enhanceMarkdown('#blog-detail');
   } catch (error) {
     target.textContent = error.message;
   }
@@ -166,100 +168,30 @@ function renderTextBlocks(value) {
 }
 
 function renderMarkdown(value) {
-  const lines = String(value || '').replace(/\r\n/g, '\n').split('\n');
-  const html = [];
-  let inList = false;
-  let listType = '';
-  let inCode = false;
-  let codeLines = [];
+  const raw = String(value || '').trim();
+  if (!raw) return '';
 
-  const closeList = () => {
-    if (inList) {
-      html.push(`</${listType}>`);
-      inList = false;
-      listType = '';
-    }
-  };
-
-  const closeCode = () => {
-    if (inCode) {
-      html.push(`<pre class="detail-code"><code>${escapeHtml(codeLines.join('\n'))}</code></pre>`);
-      inCode = false;
-      codeLines = [];
-    }
-  };
-
-  for (const rawLine of lines) {
-    const line = rawLine.trimEnd();
-    const trimmed = line.trim();
-
-    if (trimmed.startsWith('```')) {
-      closeList();
-      if (inCode) {
-        closeCode();
-      } else {
-        inCode = true;
-        codeLines = [];
+  if (window.marked) {
+    window.marked.setOptions({
+      gfm: true,
+      breaks: false,
+      headerIds: false,
+      mangle: false,
+      highlight(code, lang) {
+        if (window.hljs) {
+          if (lang && window.hljs.getLanguage(lang)) {
+            return window.hljs.highlight(code, { language: lang }).value;
+          }
+          return window.hljs.highlightAuto(code).value;
+        }
+        return escapeHtml(code);
       }
-      continue;
-    }
+    });
 
-    if (inCode) {
-      codeLines.push(rawLine);
-      continue;
-    }
-
-    if (!trimmed) {
-      closeList();
-      continue;
-    }
-
-    if (/^---+$/.test(trimmed) || /^\*\*\*+$/.test(trimmed)) {
-      closeList();
-      html.push('<hr class="detail-divider">');
-      continue;
-    }
-
-    const headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
-    if (headingMatch) {
-      closeList();
-      const level = headingMatch[1].length;
-      const text = renderInlineMarkdown(headingMatch[2]);
-      html.push(`<h${level + 1}>${text}</h${level + 1}>`);
-      continue;
-    }
-
-    const ulMatch = trimmed.match(/^[-*+]\s+(.+)$/);
-    if (ulMatch) {
-      if (!inList || listType !== 'ul') {
-        closeList();
-        inList = true;
-        listType = 'ul';
-        html.push('<ul class="detail-list">');
-      }
-      html.push(`<li>${renderInlineMarkdown(ulMatch[1])}</li>`);
-      continue;
-    }
-
-    const olMatch = trimmed.match(/^\d+\.\s+(.+)$/);
-    if (olMatch) {
-      if (!inList || listType !== 'ol') {
-        closeList();
-        inList = true;
-        listType = 'ol';
-        html.push('<ol class="detail-list">');
-      }
-      html.push(`<li>${renderInlineMarkdown(olMatch[1])}</li>`);
-      continue;
-    }
-
-    closeList();
-    html.push(`<p class="detail-paragraph">${renderInlineMarkdown(trimmed)}</p>`);
+    return window.marked.parse(raw);
   }
 
-  closeCode();
-  closeList();
-  return html.join('');
+  return escapeHtml(raw);
 }
 
 function renderInlineMarkdown(text) {
@@ -269,4 +201,24 @@ function renderInlineMarkdown(text) {
   output = output.replace(/\*([^*]+)\*/g, '<em>$1</em>');
   output = output.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
   return output;
+}
+
+function enhanceMarkdown(targetSelector) {
+  const container = document.querySelector(targetSelector);
+  if (!container) return;
+
+  // Mermaid blocks: convert fenced code blocks into mermaid containers.
+  container.querySelectorAll('pre > code.language-mermaid, pre > code.lang-mermaid, pre > code.mermaid').forEach((code) => {
+    const pre = code.parentElement;
+    if (!pre) return;
+    const mermaidDiv = document.createElement('div');
+    mermaidDiv.className = 'mermaid';
+    mermaidDiv.textContent = code.textContent || '';
+    pre.replaceWith(mermaidDiv);
+  });
+
+  if (window.mermaid) {
+    window.mermaid.initialize({ startOnLoad: false, theme: document.body.classList.contains('dark') ? 'dark' : 'default' });
+    window.mermaid.init(undefined, container.querySelectorAll('.mermaid'));
+  }
 }

@@ -31,6 +31,7 @@ for (let i = 0; i < bodySkin.length; i += 1) {
     const dark = this.value === 'dark';
     document.body.classList.toggle('dark', dark);
     localStorage.setItem(themeStorageKey, dark ? 'dark' : 'light');
+    refreshMermaidTheme();
   });
 }
 
@@ -60,4 +61,14 @@ document.body.classList.toggle('dark', darkEnabled);
 for (let i = 0; i < bodySkin.length; i += 1) {
   const input = bodySkin[i];
   input.checked = input.value === (darkEnabled ? 'dark' : 'light');
+}
+
+function refreshMermaidTheme() {
+  if (!window.mermaid) return;
+  const theme = document.body.classList.contains('dark') ? 'dark' : 'default';
+  window.mermaid.initialize({ startOnLoad: false, theme });
+  const nodes = document.querySelectorAll('.mermaid');
+  if (nodes.length) {
+    window.mermaid.init(undefined, nodes);
+  }
 }
