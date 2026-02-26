@@ -45,7 +45,7 @@ export const blogSchema = z.object({
   slug: z.string().trim().min(2).max(180).optional(),
   title: z.string().trim().min(2).max(220),
   summary: z.string().trim().max(1000).optional(),
-  content: z.string().trim().min(2).max(40000),
+  content: z.string().trim().min(2).max(100000),
   date_label: z.string().trim().max(80).optional(),
   tags: tagsSchema,
   image_url: z.string().trim().max(1000).optional(),

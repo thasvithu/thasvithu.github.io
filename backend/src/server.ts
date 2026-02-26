@@ -105,7 +105,9 @@ app.post(
     }
 
     const token = auth.signAdminToken({ sub: payload.username, role: 'admin' });
-    await logAdminAction(payload.username, 'login', 'auth', null, null);
+    void logAdminAction(payload.username, 'login', 'auth', null, null).catch(() => {
+      // Avoid blocking login if the audit log insert fails.
+    });
     res.json({ token });
   })
 );

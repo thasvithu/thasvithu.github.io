@@ -9,7 +9,9 @@ const connectionString = normalizeDatabaseUrl(config.databaseUrl);
 
 export const pool = new Pool({
   connectionString: connectionString || undefined,
-  ssl: connectionString ? { rejectUnauthorized: false } : undefined
+  ssl: connectionString ? { rejectUnauthorized: false } : undefined,
+  connectionTimeoutMillis: 5000,
+  query_timeout: 10000
 });
 
 export async function query<T extends QueryResultRow = QueryResultRow>(
