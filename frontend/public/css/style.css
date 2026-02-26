@@ -401,21 +401,75 @@ body.dark .skills-group-title {
 
 .technical-skills-grid {
     row-gap: 16px;
+    column-gap: 0;
 }
 
 .technical-skills-col {
+    -ms-flex: 0 0 50%;
+    flex: 0 0 50%;
+    max-width: 50%;
+    box-sizing: border-box;
     border: 1px solid #d4d4e3;
     border-radius: 12px;
-    padding-top: 14px;
-    padding-bottom: 8px;
+    padding-top: 12px;
+    padding-bottom: 12px;
     background-color: #fdf9ff;
+}
+
+.technical-skills-grid > .technical-skills-col:first-child {
+    margin-right: 15px;
+}
+
+.technical-skills-grid > .technical-skills-col:last-child {
+    margin-left: 15px;
+}
+
+.technical-skills-col .skills-group-title {
+    margin: 16px 0 14px;
+}
+
+.technical-skills-col .skills-group-title:first-of-type {
+    margin-top: 0;
+}
+
+.technical-skills-col .skill-item {
+    margin-bottom: 18px;
+}
+
+.technical-skills-col .skill-item:last-of-type {
+    margin-bottom: 10px;
 }
 
 body.dark .technical-skills-col {
     border-color: #393939;
-    background-color: #222222;
+    background: #1f1f1f;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
 }
 
+body.dark .technical-skills-col .skill-item {
+    background: #252525;
+    border: 1px solid #2f2f2f;
+    border-radius: 10px;
+    padding: 10px 12px 14px;
+}
+
+body.dark .technical-skills-col .skills-group-title {
+    border-bottom-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark .about .about-content .skills .skill-item .progress {
+    background-color: #3a3a3a;
+}
+
+body.dark .about .about-content .skills .skill-item .progress .progress-in {
+    background: linear-gradient(90deg, var(--skin-color), #ff6a7a);
+    box-shadow: 0 4px 10px rgba(236, 24, 57, 0.35);
+}
+
+body.dark .about .about-content .skills .skill-item h5,
+body.dark .about .about-content .skills .skill-item .skill-porcent {
+    color: #f2f2f2;
+}
 body.dark .detail-content,
 body.dark .detail-content h1,
 body.dark .detail-content h3,
@@ -832,6 +886,13 @@ body.dark .detail-markdown .detail-code {
     margin-top: 40px;
 }
 
+.about .about-content .skills.technical-skills-col {
+    -ms-flex: 0 0 calc(50% - 15px);
+    flex: 0 0 calc(50% - 15px);
+    max-width: calc(50% - 15px);
+    margin-top: 0;
+}
+
 .about .about-content .skills .skill-item {
     -ms-flex: 0 0 100%;
     flex: 0 0 100%;
@@ -857,6 +918,7 @@ body.dark .detail-markdown .detail-code {
     border-radius: 4px;
     width: 100%;
     position: relative;
+    overflow: hidden;
 }
 
 .about .about-content .skills .skill-item .progress .progress-in {
@@ -865,6 +927,11 @@ body.dark .detail-markdown .detail-code {
     top: 0;
     height: 100%;
     border-radius: 4px;
+    background: linear-gradient(90deg, var(--skin-color), #ff6a7a);
+    box-shadow: 0 4px 10px rgba(236, 24, 57, 0.25);
+    transform: scaleX(0);
+    transform-origin: left;
+    animation: skillFill 1.4s ease forwards;
 }
 
 .about .about-content .skills .skill-item .skill-porcent {
@@ -874,6 +941,22 @@ body.dark .detail-markdown .detail-code {
     top: -40px;
     font-weight: 400;
     color: #302e4d;
+}
+
+@keyframes skillFill {
+    from {
+        transform: scaleX(0);
+    }
+    to {
+        transform: scaleX(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .about .about-content .skills .skill-item .progress .progress-in {
+        animation: none;
+        transform: scaleX(1);
+    }
 }
 
 .about .about-content .education {
@@ -965,6 +1048,23 @@ body.dark .detail-markdown .detail-code {
     line-height: 25px;
     color: #504e70;
     margin: 0;
+}
+
+.timeline-bullets {
+    margin: 8px 0 0;
+    padding-left: 18px;
+}
+
+.timeline-bullets li {
+    margin-bottom: 8px;
+}
+
+.timeline-bullets li:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-location {
+    margin-top: 10px;
 }
 
 /* Services Section */
@@ -1656,6 +1756,11 @@ body.dark .contact-toast.error {
         flex: 0 0 100% !important;
         -ms-flex: 0 0 100% !important;
         max-width: 100% !important;
+    }
+
+    .technical-skills-grid > .technical-skills-col {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
     }
 
     .contact .contact-info-item {

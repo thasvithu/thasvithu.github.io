@@ -14,11 +14,11 @@ window.addEventListener('load', function () {
 if (window.ityped && document.querySelector('.iTyped')) {
   window.ityped.init(document.querySelector('.iTyped'), {
     strings: [
-      "I'm a Data Scientist",
-      'I Love Python',
-      'I Work with AI',
-      'I Build Machine Learning Models',
-      'I Analyze Data'
+      'I Build Production-Ready AI Systems',
+      'I Design End-to-End ML Pipelines',
+      'I Develop RAG Systems & AI Agents',
+      'I Architect Scalable FastAPI Services',
+      'I Deploy AI with Docker & CI/CD'
     ],
     loop: true
   });
